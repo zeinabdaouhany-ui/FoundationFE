@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOUNDATION  |  Strategy Architecture Diagnostic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A1628; --ink-soft:#1A2942;
+  --paper:#FFFFFF; --cream:#F8F6F2; --cream-deep:#EFEBE3;
+  --line:#E5E1D8; --line-soft:#F0EDE6;
+  --copper:#B85C38; --copper-deep:#8E4528;
+  --gold:#C9A961;
+  --muted:#5A6478; --muted-soft:#8A93A6;
+  --green:#2D5F4E; --red:#A84032;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'Manrope',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit;font-size:inherit}
+
+/* ============ APP HEADER ============ */
+.app-header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line-soft);
+}
+.app-header-inner{
+  max-width:1200px;margin:0 auto;
+  padding:18px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.brand{
+  font-family:var(--serif);font-weight:500;
+  font-size:20px;letter-spacing:0.18em;color:var(--ink);
+}
+.brand .dot{color:var(--copper);font-size:24px;line-height:0;vertical-align:middle}
+.brand-sub{
+  font-family:var(--sans);font-size:9px;font-weight:500;
+  letter-spacing:0.32em;color:var(--muted-soft);
+  margin-top:2px;text-transform:uppercase;
+}
+.progress-track{
+  display:flex;align-items:center;gap:8px;
+}
+.progress-step{
+  width:32px;height:2px;background:var(--line);transition:all 0.3s;
+}
+.progress-step.done{background:var(--copper)}
+.progress-step.current{background:var(--ink)}
+.progress-text{
+  font-family:var(--mono);font-size:11px;color:var(--muted);
+  letter-spacing:0.08em;margin-left:12px;
+}
+
+/* ============ MAIN ============ */
+main{padding-top:90px;padding-bottom:120px;min-height:100vh}
+.wizard{max-width:880px;margin:0 auto;padding:0 32px}
+
+/* Step header */
+.step-eyebrow{
+  font-family:var(--mono);font-size:11px;color:var(--copper);
+  letter-spacing:0.1em;font-weight:500;margin-bottom:12px;
+}
+.step-title{
+  font-family:var(--serif);font-size:48px;font-weight:300;
+  letter-spacing:-0.03em;line-height:1.05;margin-bottom:20px;
+}
+.step-title em{font-style:italic;color:var(--copper);font-weight:400}
+.step-lead{
+  font-size:18px;color:var(--muted);line-height:1.55;
+  font-weight:300;margin-bottom:48px;max-width:640px;
+}
+
+/* ============ STEPS / SCREENS ============ */
+.screen{display:none;animation:fadeIn 0.4s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============ INTRO ============ */
+.intro-hero{padding:60px 0 40px;text-align:left}
+.intro-title{
+  font-family:var(--serif);font-size:clamp(48px,7vw,80px);
+  font-weight:300;letter-spacing:-0.04em;line-height:1.0;
+  margin-bottom:32px;
+}
+.intro-title em{font-style:italic;color:var(--copper);font-weight:400}
+.intro-lead{
+  font-size:20px;color:var(--ink-soft);font-weight:300;
+  line-height:1.55;margin-bottom:40px;max-width:680px;
+}
+.intro-lead strong{color:var(--ink);font-weight:600}
+.intro-meta{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  border-top:1px solid var(--line);padding-top:32px;margin-bottom:40px;
+}
+.intro-meta-item{}
+.intro-meta-num{
+  font-family:var(--serif);font-size:36px;font-weight:400;
+  line-height:1;color:var(--ink);letter-spacing:-0.02em;
+}
+.intro-meta-num .acc{color:var(--copper)}
+.intro-meta-label{
+  font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;
+}
+
+/* ============ FORMS ============ */
+.form-group{margin-bottom:32px}
+.form-label{
+  display:block;font-size:11px;font-weight:600;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--ink);margin-bottom:12px;
+}
+.form-label .req{color:var(--copper);margin-left:4px}
+.form-input,.form-select{
+  width:100%;padding:16px 18px;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:1px;
+  font-size:16px;color:var(--ink);
+  transition:all 0.2s;
+}
+.form-input:focus,.form-select:focus{
+  outline:none;border-color:var(--copper);
+  box-shadow:0 0 0 3px rgba(184,92,56,0.1);
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* ============ QUESTIONS ============ */
+.q-card{
+  background:var(--paper);
+  border:1px solid var(--line);
+  padding:32px 36px;
+  margin-bottom:16px;
+  transition:all 0.2s;
+}
+.q-card:hover{border-color:var(--ink-soft)}
+.q-num{
+  font-family:var(--mono);font-size:11px;color:var(--muted-soft);
+  letter-spacing:0.1em;margin-bottom:8px;
+}
+.q-text{
+  font-family:var(--serif);font-size:22px;font-weight:400;
+  letter-spacing:-0.01em;line-height:1.3;margin-bottom:8px;color:var(--ink);
+}
+.q-help{font-size:13px;color:var(--muted);margin-bottom:24px;font-style:italic}
+.q-scale{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+}
+.q-option{
+  padding:14px 8px;
+  background:var(--cream);
+  border:1px solid var(--line);
+  border-radius:1px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.2s;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+  line-height:1.3;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:72px;
+}
+.q-option:hover{
+  border-color:var(--copper);background:var(--paper);color:var(--ink);
+}
+.q-option.selected{
+  background:var(--ink);border-color:var(--ink);color:var(--paper);
+}
+.q-option .opt-num{
+  font-family:var(--serif);font-size:18px;font-weight:500;
+  display:block;margin-bottom:4px;
+}
+.q-option.selected .opt-num{color:var(--gold)}
+.q-anchor-row{
+  display:flex;justify-content:space-between;
+  font-size:10px;color:var(--muted-soft);
+  letter-spacing:0.08em;text-transform:uppercase;
+  margin-top:12px;
+}
+
+/* ============ NAV BUTTONS ============ */
+.nav-buttons{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:16px;margin-top:48px;padding-top:32px;
+  border-top:1px solid var(--line);
+}
+.btn{
+  padding:18px 32px;font-size:13px;font-weight:600;
+  letter-spacing:0.12em;text-transform:uppercase;
+  border-radius:1px;transition:all 0.25s;
+  display:inline-flex;align-items:center;gap:12px;
+  text-decoration:none;
+}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--copper)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn-secondary:hover{background:var(--ink);color:var(--paper)}
+.btn-link{
+  font-size:13px;color:var(--muted);font-weight:500;
+  letter-spacing:0.1em;text-transform:uppercase;
+}
+.btn-link:hover{color:var(--copper)}
+
+/* ============ REPORT (4 PAGES) ============ */
+.report-screen{display:none}
+.report-screen.active{display:block}
+
+.report-toolbar{
+  position:sticky;top:90px;z-index:50;
+  background:var(--cream);
+  border-bottom:1px solid var(--line);
+  padding:16px 0;margin-bottom:32px;
+}
+.report-toolbar-inner{
+  max-width:880px;margin:0 auto;padding:0 32px;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+}
+.report-toolbar-left{font-size:13px;color:var(--muted)}
+.report-toolbar-left strong{color:var(--ink)}
+.report-toolbar-right{display:flex;gap:12px}
+
+.report{
+  max-width:880px;margin:0 auto;
+}
+
+.page{
+  background:var(--paper);
+  width:100%;
+  min-height:1100px; /* approximates A4 portrait */
+  padding:64px 72px;
+  margin-bottom:32px;
+  border:1px solid var(--line);
+  position:relative;
+  page-break-after:always;
+  break-after:page;
+}
+.page-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding-bottom:24px;border-bottom:1px solid var(--line);
+  margin-bottom:40px;
+}
+.page-brand{
+  font-family:var(--serif);font-weight:500;font-size:14px;
+  letter-spacing:0.18em;color:var(--ink);
+}
+.page-brand .dot{color:var(--copper)}
+.page-meta{
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+  text-align:right;letter-spacing:0.05em;
+}
+.page-num{
+  position:absolute;bottom:32px;right:72px;
+  font-family:var(--mono);font-size:10px;color:var(--muted-soft);
+  letter-spacing:0.1em;
+}
+.page-footer-line{
+  position:absolute;bottom:32px;left:72px;right:140px;
+  font-family:var(--serif);font-style:italic;font-size:10px;
+  color:var(--muted-soft);
+}
+
+/* Report typography */
+.r-eyebrow{
+  font-family:var(--mono);font-size:11px;color:var(--copper);
+  letter-spacing:0.15em;font-weight:500;margin-bottom:8px;
+  text-transform:uppercase;
+}
+.r-title{
+  font-family:var(--serif);font-size:36px;font-weight:300;
+  letter-spacing:-0.02em;line-height:1.05;margin-bottom:16px;
+}
+.r-title em{color:var(--copper);font-style:italic;font-weight:400}
+.r-subtitle{
+  font-size:16px;color:var(--muted);line-height:1.5;
+  margin-bottom:32px;font-weight:300;
+}
+.r-section{margin-bottom:36px}
+.r-section-head{
+  font-family:var(--sans);font-size:11px;font-weight:700;
+  letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);
+  padding-bottom:8px;border-bottom:1px solid var(--ink);
+  margin-bottom:20px;
+}
+.r-h3{
+  font-family:var(--serif);font-size:20px;font-weight:500;
+  letter-spacing:-0.01em;margin-bottom:12px;color:var(--ink);
+}
+.r-body{font-size:14px;line-height:1.65;color:var(--ink-soft);margin-bottom:16px}
+.r-callout{
+  background:var(--cream);
+  border-left:3px solid var(--copper);
+  padding:20px 24px;margin:20px 0;
+}
+.r-callout-label{
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--copper);font-weight:600;margin-bottom:8px;
+}
+.r-callout-text{
+  font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--ink);
+}
+
+/* PAGE 1: EXEC SUMMARY */
+.exec-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--line);
+  border:1px solid var(--line);margin-bottom:32px;
+}
+.exec-cell{
+  background:var(--paper);padding:20px;
+}
+.exec-label{
+  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--copper);font-weight:600;margin-bottom:8px;
+}
+.exec-value{
+  font-family:var(--serif);font-size:22px;font-weight:500;
+  letter-spacing:-0.01em;color:var(--ink);line-height:1.1;
+}
+.exec-meta{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* The 2x2 mini matrix */
+.mini-matrix{
+  background:var(--ink);
+  padding:24px;
+  position:relative;
+  margin:24px 0;
+}
+.mini-matrix-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:4px;height:200px;margin-left:32px;margin-bottom:24px;
+}
+.mq{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.15);
+  padding:10px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;
+}
+.mq-name{
+  font-family:var(--serif);font-size:14px;color:var(--paper);
+  font-weight:500;
+}
+.mq-traits{
+  font-size:9px;color:rgba(255,255,255,0.5);
+  letter-spacing:0.05em;line-height:1.4;text-transform:uppercase;
+}
+.mq.current{background:var(--copper);border-color:var(--copper)}
+.mq.current .mq-traits{color:rgba(255,255,255,0.85)}
+.mq.target{
+  border:2px dashed var(--gold);
+  background:rgba(201,169,97,0.1);
+}
+.mq.target .mq-name{color:var(--gold)}
+.mq.target .mq-traits{color:rgba(201,169,97,0.7)}
+.mq.both{
+  background:var(--copper);border:2px dashed var(--gold);
+}
+.mini-axis-y{
+  position:absolute;left:8px;top:50%;
+  transform:rotate(-90deg) translateX(50%);transform-origin:left center;
+  font-size:8px;font-weight:600;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--gold);white-space:nowrap;
+}
+.mini-axis-x{
+  font-size:8px;font-weight:600;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--gold);
+  text-align:center;margin-top:8px;
+}
+.mini-legend{
+  display:flex;gap:24px;margin-top:16px;
+  font-size:10px;color:rgba(255,255,255,0.7);
+}
+.mini-legend-item{display:flex;align-items:center;gap:8px}
+.mini-legend-swatch{width:12px;height:12px;border-radius:1px}
+.mini-legend-swatch.cur{background:var(--copper)}
+.mini-legend-swatch.tgt{border:2px dashed var(--gold);background:rgba(201,169,97,0.2)}
+
+/* Maturity strip */
+.maturity-strip{
+  display:flex;gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:20px 0;
+}
+.maturity-cell{
+  flex:1;background:var(--paper);padding:14px 12px;text-align:center;
+  position:relative;
+}
+.maturity-cell.current{background:var(--copper);color:var(--paper)}
+.maturity-cell-num{
+  font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:0.1em;
+}
+.maturity-cell.current .maturity-cell-num{color:rgba(255,255,255,0.7)}
+.maturity-cell-name{
+  font-family:var(--serif);font-size:12px;font-weight:500;
+  margin-top:6px;color:var(--ink);line-height:1.2;
+}
+.maturity-cell.current .maturity-cell-name{color:var(--paper)}
+.maturity-cell::after{
+  content:'';position:absolute;right:-8px;top:50%;
+  transform:translateY(-50%);
+  border-left:8px solid var(--paper);
+  border-top:6px solid transparent;border-bottom:6px solid transparent;
+  z-index:2;
+}
+.maturity-cell:last-child::after{display:none}
+.maturity-cell.current::after{border-left-color:var(--copper)}
+
+/* PAGE 2: STRATEGIC IMPERATIVE */
+.gap-table{width:100%;border-collapse:collapse;margin:20px 0}
+.gap-table th,.gap-table td{
+  text-align:left;padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+}
+.gap-table th{
+  background:var(--cream);font-weight:600;font-size:10px;
+  letter-spacing:0.15em;text-transform:uppercase;color:var(--ink);
+}
+.gap-table td:first-child{
+  font-family:var(--serif);font-size:14px;font-weight:500;color:var(--ink);
+  width:30%;
+}
+.gap-table .cur-cell{color:var(--muted)}
+.gap-table .tgt-cell{color:var(--copper);font-weight:500}
+
+.value-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:12px;margin:24px 0;
+}
+.value-card{
+  background:var(--cream);padding:20px;
+  border-left:3px solid var(--copper);
+}
+.value-card-label{
+  font-size:10px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--copper);font-weight:600;margin-bottom:6px;
+}
+.value-card-amt{
+  font-family:var(--serif);font-size:28px;font-weight:400;
+  letter-spacing:-0.02em;line-height:1;color:var(--ink);
+}
+.value-card-amt .unit{font-size:14px;color:var(--copper);margin-left:4px}
+.value-card-desc{
+  font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4;
+}
+
+.risk-list{list-style:none;margin:16px 0}
+.risk-list li{
+  padding:10px 0;padding-left:24px;
+  position:relative;font-size:13px;color:var(--ink-soft);
+  line-height:1.55;border-bottom:1px solid var(--line-soft);
+}
+.risk-list li::before{
+  content:'';position:absolute;left:0;top:14px;
+  width:8px;height:8px;background:var(--red);
+  transform:rotate(45deg);
+}
+
+/* PAGE 3: 6-STEP ROADMAP */
+.step-block{
+  display:grid;grid-template-columns:60px 1fr;gap:20px;
+  padding:18px 0;border-bottom:1px solid var(--line-soft);
+  page-break-inside:avoid;break-inside:avoid;
+}
+.step-block-num{
+  font-family:var(--serif);font-size:36px;font-weight:300;
+  color:var(--copper);line-height:1;letter-spacing:-0.02em;
+}
+.step-block-content h4{
+  font-family:var(--serif);font-size:16px;font-weight:500;
+  margin-bottom:6px;color:var(--ink);
+}
+.step-block-content .step-meta{
+  font-family:var(--mono);font-size:9px;color:var(--muted-soft);
+  letter-spacing:0.1em;margin-bottom:8px;
+}
+.step-block-content p{font-size:12px;color:var(--ink-soft);line-height:1.55;margin-bottom:8px}
+.step-block-content .actions{
+  margin-top:8px;font-size:11px;color:var(--muted);
+}
+.step-block-content .actions strong{color:var(--copper);font-weight:600}
+.step-status{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.1em;
+  padding:3px 8px;border-radius:1px;display:inline-block;
+  margin-bottom:6px;text-transform:uppercase;
+}
+.status-done{background:var(--green);color:var(--paper)}
+.status-active{background:var(--copper);color:var(--paper)}
+.status-pending{background:var(--cream-deep);color:var(--muted)}
+
+/* PAGE 4: 12-MONTH PLAN */
+.quarter-grid{
+  display:grid;grid-template-columns:1fr;
+  gap:1px;background:var(--line);
+  border:1px solid var(--line);
+}
+.quarter-block{
+  background:var(--paper);padding:20px 24px;
+  display:grid;grid-template-columns:80px 1fr;gap:20px;
+}
+.quarter-label{
+  font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+  color:var(--copper);font-weight:600;
+}
+.quarter-label .month-range{
+  display:block;font-family:var(--sans);font-size:9px;
+  color:var(--muted);font-weight:500;margin-top:4px;
+}
+.quarter-content h5{
+  font-family:var(--serif);font-size:15px;font-weight:500;
+  margin-bottom:8px;color:var(--ink);
+}
+.quarter-content ul{list-style:none;margin:0}
+.quarter-content ul li{
+  padding:4px 0;font-size:12px;color:var(--ink-soft);line-height:1.55;
+  padding-left:14px;position:relative;
+}
+.quarter-content ul li::before{
+  content:'';position:absolute;left:0;top:11px;
+  width:5px;height:1px;background:var(--copper);
+}
+
+.kpi-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;margin-top:20px;
+}
+.kpi-card{
+  border-top:2px solid var(--copper);padding-top:12px;
+}
+.kpi-card-label{
+  font-size:9px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:4px;
+}
+.kpi-card-target{
+  font-family:var(--serif);font-size:18px;font-weight:500;
+  color:var(--ink);line-height:1.1;
+}
+
+.signoff{
+  margin-top:32px;padding-top:24px;border-top:1px solid var(--line);
+  display:grid;grid-template-columns:1fr 1fr;gap:32px;
+}
+.signoff-block{}
+.signoff-line{
+  border-bottom:1px solid var(--ink);height:32px;margin-bottom:8px;
+}
+.signoff-label{
+  font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+}
+
+/* ============ PRINT ============ */
+@media print{
+  @page{
+    size:A4;
+    margin:12mm;
+  }
+  body{background:var(--paper)}
+  .app-header,.report-toolbar,.no-print{display:none !important}
+  main{padding:0}
+  .report{max-width:100%}
+  .page{
+    border:none;
+    margin:0;
+    padding:0;
+    min-height:auto;
+    page-break-after:always;
+    break-after:page;
+  }
+  .page:last-child{page-break-after:auto;break-after:auto}
+  .page-num,.page-footer-line{position:fixed;bottom:6mm}
+  .step-block{page-break-inside:avoid;break-inside:avoid}
+  .r-section{page-break-inside:avoid;break-inside:avoid}
+  .quarter-block{page-break-inside:avoid;break-inside:avoid}
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:768px){
+  .app-header-inner{padding:14px 20px}
+  .progress-text{display:none}
+  .progress-step{width:24px}
+  .wizard,.report{padding:0 20px}
+  .form-row{grid-template-columns:1fr}
+  .q-card{padding:24px}
+  .q-text{font-size:18px}
+  .q-scale{grid-template-columns:repeat(5,1fr);gap:4px}
+  .q-option{padding:10px 4px;font-size:10px;min-height:64px}
+  .q-option .opt-num{font-size:14px}
+  .step-title{font-size:32px}
+  .intro-meta{grid-template-columns:1fr}
+  .nav-buttons{flex-wrap:wrap}
+  .btn{padding:14px 22px;font-size:12px}
+  .page{padding:32px 24px;min-height:auto}
+  .exec-grid{grid-template-columns:1fr}
+  .value-grid{grid-template-columns:1fr}
+  .kpi-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ APP HEADER ============ -->
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="brand">FOUNDATION<span class="dot">.</span>
+      <div class="brand-sub">Strategy Architecture Diagnostic</div>
+    </div>
+    <div class="progress-track no-print">
+      <div class="progress-step current" data-step="0"></div>
+      <div class="progress-step" data-step="1"></div>
+      <div class="progress-step" data-step="2"></div>
+      <div class="progress-step" data-step="3"></div>
+      <div class="progress-step" data-step="4"></div>
+      <div class="progress-step" data-step="5"></div>
+      <div class="progress-step" data-step="6"></div>
+      <span class="progress-text" id="progressText">Step 1 of 7</span>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wizard">
+
+<!-- ============ SCREEN 0: INTRO ============ -->
+<section class="screen active" id="screen-0">
+  <div class="intro-hero">
+    <div class="step-eyebrow">EXECUTIVE DIAGNOSTIC  /  15 MINUTES</div>
+    <h1 class="intro-title">
+      What foundation does your<br>company need to <em>execute</em>?
+    </h1>
+    <p class="intro-lead">
+      A structured diagnostic grounded in the Ross, Weill and Robertson (2006) framework. You will answer <strong>32 questions</strong> across four dimensions, after which the platform will generate a <strong>4-page board-ready roadmap</strong> tailored to your firm's current state, future strategy, and the gap between them.
+    </p>
+    <div class="intro-meta">
+      <div class="intro-meta-item">
+        <div class="intro-meta-num">32<span class="acc">.</span></div>
+        <div class="intro-meta-label">Calibration questions across operating model, strategy, architecture maturity, and engagement readiness</div>
+      </div>
+      <div class="intro-meta-item">
+        <div class="intro-meta-num">4<span class="acc">×</span></div>
+        <div class="intro-meta-label">Dimensions analysed: current state, future state, gap, and the six-step engagement roadmap</div>
+      </div>
+      <div class="intro-meta-item">
+        <div class="intro-meta-num">4<span class="acc">p</span></div>
+        <div class="intro-meta-label">Page printable roadmap for board distribution and quarterly review cycles</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goToStep(1)">Begin diagnostic →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 1: COMPANY PROFILE ============ -->
+<section class="screen" id="screen-1">
+  <div class="step-eyebrow">SECTION 01  /  COMPANY PROFILE</div>
+  <h2 class="step-title">First, tell us about your <em>firm</em>.</h2>
+  <p class="step-lead">These inputs personalise the report and calibrate the value model. None of this data leaves your browser.</p>
+
+  <div class="form-group">
+    <label class="form-label">Company name <span class="req">*</span></label>
+    <input type="text" class="form-input" id="f_company" placeholder="Acme Corporation">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Industry sector</label>
+      <select class="form-select" id="f_industry">
+        <option value="">Select...</option>
+        <option>Financial Services</option>
+        <option>Manufacturing &amp; Industrial</option>
+        <option>Energy &amp; Utilities</option>
+        <option>Healthcare &amp; Life Sciences</option>
+        <option>Retail &amp; Consumer</option>
+        <option>Technology &amp; Software</option>
+        <option>Telecommunications</option>
+        <option>Logistics &amp; Transportation</option>
+        <option>Professional Services</option>
+        <option>Public Sector</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Organisation size</label>
+      <select class="form-select" id="f_size">
+        <option value="sme">SME (under 500 employees)</option>
+        <option value="mid" selected>Mid-market (500 to 5,000)</option>
+        <option value="large">Large (5,000 to 25,000)</option>
+        <option value="enterprise">Enterprise (above 25,000)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Number of business units</label>
+      <select class="form-select" id="f_units">
+        <option>1 to 3</option>
+        <option selected>4 to 10</option>
+        <option>11 to 25</option>
+        <option>More than 25</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Geographic footprint</label>
+      <select class="form-select" id="f_geo">
+        <option>Single country</option>
+        <option selected>Regional (continental)</option>
+        <option>Multinational (cross-continental)</option>
+        <option>Global (all major regions)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Sponsor name</label>
+      <input type="text" class="form-input" id="f_sponsor" placeholder="Jane Smith">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sponsor role</label>
+      <input type="text" class="form-input" id="f_role" placeholder="Chief Executive Officer" value="Chief Executive Officer">
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn-link" onclick="goToStep(0)">← Back</button>
+    <button class="btn btn-primary" onclick="goToStep(2)">Continue →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 2: CURRENT OPERATING MODEL ============ -->
+<section class="screen" id="screen-2">
+  <div class="step-eyebrow">SECTION 02  /  CURRENT OPERATING MODEL</div>
+  <h2 class="step-title">How does your company actually <em>run</em> today?</h2>
+  <p class="step-lead">Rate each statement on a 1 to 5 scale based on the present reality, not the aspiration. Honesty here drives the accuracy of the entire report.</p>
+
+  <div id="qBlock-current"></div>
+
+  <div class="nav-buttons">
+    <button class="btn-link" onclick="goToStep(1)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(2,3)" id="next2">Continue →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 3: FUTURE STRATEGY ============ -->
+<section class="screen" id="screen-3">
+  <div class="step-eyebrow">SECTION 03  /  STRATEGIC AMBITION</div>
+  <h2 class="step-title">Where is the strategy taking you over the next <em>three years</em>?</h2>
+  <p class="step-lead">For each tradeoff, indicate the strategic priority of the firm. This determines the operating model the foundation must be built to support.</p>
+
+  <div id="qBlock-future"></div>
+
+  <div class="nav-buttons">
+    <button class="btn-link" onclick="goToStep(2)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(3,4)" id="next3">Continue →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 4: ARCHITECTURE MATURITY ============ -->
+<section class="screen" id="screen-4">
+  <div class="step-eyebrow">SECTION 04  /  ARCHITECTURE MATURITY</div>
+  <h2 class="step-title">How mature is your <em>architecture</em> today?</h2>
+  <p class="step-lead">These questions calibrate where your firm sits on the four-stage maturity journey: Business Silos, Standardised Technology, Optimised Core, or Business Modularity.</p>
+
+  <div id="qBlock-maturity"></div>
+
+  <div class="nav-buttons">
+    <button class="btn-link" onclick="goToStep(3)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(4,5)" id="next4">Continue →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 5: ENGAGEMENT READINESS ============ -->
+<section class="screen" id="screen-5">
+  <div class="step-eyebrow">SECTION 05  /  ENGAGEMENT MODEL READINESS</div>
+  <h2 class="step-title">Where are you on the <em>six-step</em> sequence?</h2>
+  <p class="step-lead">Indicate the current status of each step in the engagement sequence. This determines exactly where the roadmap begins for your firm.</p>
+
+  <div id="qBlock-engagement"></div>
+
+  <div class="nav-buttons">
+    <button class="btn-link" onclick="goToStep(4)">← Back</button>
+    <button class="btn btn-primary" onclick="validateAndGo(5,6)" id="next5">Generate report →</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN 6: REPORT (4 PAGES) ============ -->
+<section class="screen report-screen" id="screen-6">
+  <div class="report-toolbar no-print">
+    <div class="report-toolbar-inner">
+      <div class="report-toolbar-left">
+        Report ready for <strong id="rt_company">your firm</strong>. Print-optimised for A4.
+      </div>
+      <div class="report-toolbar-right">
+        <button class="btn btn-secondary" onclick="goToStep(0)">Restart</button>
+        <button class="btn btn-primary" onclick="window.print()">Print / PDF →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="report" id="reportBody">
+    <!-- 4 pages injected by JS -->
+  </div>
+</section>
+
+</div>
+</main>
+
+<script>
+/* ============================================================
+   QUESTION DATA
+   ============================================================ */
+
+const Q_CURRENT = [
+  // Integration questions (axis Y)
+  { id:'c1', dim:'integration', text:'Business units share customers across the firm.', help:'Same customer relationships span multiple units, not separate customer bases per unit.' },
+  { id:'c2', dim:'integration', text:'Customer data is integrated and accessible enterprise-wide.', help:'A single customer record visible from any unit, not siloed databases.' },
+  { id:'c3', dim:'integration', text:'Business units share suppliers, products or operational data.', help:'Cross-unit transactions and shared procurement, not isolated supply chains.' },
+  { id:'c4', dim:'integration', text:'Decisions in one unit materially affect operations in others.', help:'Genuine interdependence, not autonomous P&amp;Ls operating in parallel.' },
+  // Standardisation questions (axis X)
+  { id:'c5', dim:'standardisation', text:'Core business processes are identical across all units.', help:'Order-to-cash, hire-to-retire, etc., run the same way everywhere.' },
+  { id:'c6', dim:'standardisation', text:'All units operate on the same enterprise systems (ERP, CRM).', help:'Single instance, not federated or unit-specific platforms.' },
+  { id:'c7', dim:'standardisation', text:'Local managers must follow centrally-defined procedures.', help:'Limited discretion to deviate from the corporate process.' },
+  { id:'c8', dim:'standardisation', text:'Operational execution is highly consistent across geographies.', help:'A customer in one country experiences the same service as in another.' }
+];
+
+const Q_FUTURE = [
+  { id:'f1', dim:'integration', text:'Strategic priority over three years: integrating the customer experience across units.', help:'Versus letting each unit serve its own customers independently.' },
+  { id:'f2', dim:'integration', text:'Strategic priority: leveraging cross-unit data as a competitive advantage.', help:'Versus optimising each unit independently with local data.' },
+  { id:'f3', dim:'integration', text:'Future business will require strong cross-unit collaboration on shared customers and products.', help:'Versus maintaining unit autonomy with limited handoffs.' },
+  { id:'f4', dim:'standardisation', text:'Strategic priority: process consistency and operational efficiency at enterprise scale.', help:'Versus local responsiveness through process customisation.' },
+  { id:'f5', dim:'standardisation', text:'Growth strategy: replicate the same successful business model in new markets.', help:'Versus entering new markets with different business models.' },
+  { id:'f6', dim:'standardisation', text:'Strategic priority: cost reduction through global standardisation.', help:'Versus differentiation through local market adaptation.' }
+];
+
+const Q_MATURITY = [
+  { id:'m1', text:'IT applications today are mostly local to each business unit.', help:'Score low if local; score high if companywide and modular.', invert:true },
+  { id:'m2', text:'IT funding decisions are made at the enterprise level, not by individual units.', help:'Higher score means more centralised funding for shared infrastructure.' },
+  { id:'m3', text:'Master data definitions (customer, product, supplier) are standardised enterprise-wide.', help:'Common definitions used by every system, not local variants.' },
+  { id:'m4', text:'Core business processes are designed and owned by senior management, not local leaders.', help:'Higher score means top-down process design with enterprise reach.' },
+  { id:'m5', text:'Solutions are built once and reused across the enterprise as modular components.', help:'Plug-and-play modules, not custom one-off builds for each project.' },
+  { id:'m6', text:'IT governance is proactive and architecture-driven, with clear decision rights.', help:'A governance forum exists with mandate to enforce architecture compliance.' },
+  { id:'m7', text:'A standardised project methodology with gated checkpoints is enforced across all initiatives.', help:'Versus each project defining its own process and quality gates.' },
+  { id:'m8', text:'Architecture compliance is enforced, with a formal exception-approval process for deviations.', help:'Versus architecture standards being optional or advisory.' }
+];
+
+const Q_ENGAGEMENT = [
+  { id:'e1', text:'STEP 01: We have a current diagnosis of our state, including operating model, maturity stage, and capability gaps.' },
+  { id:'e2', text:'STEP 02: Our operating model is explicitly defined, ratified by executive leadership, and communicated firmwide.' },
+  { id:'e3', text:'STEP 03: A one-page enterprise architecture core diagram exists and is used to evaluate every project.' },
+  { id:'e4', text:'STEP 04: IT funding has been reallocated toward shared infrastructure and enterprise applications.' },
+  { id:'e5', text:'STEP 05: An IT engagement model is operating, with governance, project methodology and linking mechanisms in place.' },
+  { id:'e6', text:'STEP 06: We are actively exploiting the foundation for new growth, with training, incentives and innovation pipelines aligned.' }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  step: 0,
+  profile: {},
+  answers: { current:{}, future:{}, maturity:{}, engagement:{} }
+};
+
+/* ============================================================
+   QUESTION RENDERING
+   ============================================================ */
+
+function renderQuestions(containerId, questions, group) {
+  const container = document.getElementById(containerId);
+  let html = '';
+  questions.forEach((q, i) => {
+    html += `
+      <div class="q-card" id="card_${q.id}">
+        <div class="q-num">QUESTION ${String(i+1).padStart(2,'0')} OF ${String(questions.length).padStart(2,'0')}</div>
+        <div class="q-text">${q.text}</div>
+        <div class="q-help">${q.help||''}</div>
+        <div class="q-scale">
+          ${[1,2,3,4,5].map(v => `
+            <button class="q-option" data-q="${q.id}" data-v="${v}" onclick="selectAnswer('${group}','${q.id}',${v})">
+              <span class="opt-num">${v}</span>
+              <span>${anchorLabel(v)}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="q-anchor-row">
+          <span>Strongly disagree</span>
+          <span>Strongly agree</span>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function anchorLabel(v) {
+  return ['Disagree','Slightly disagree','Neutral','Slightly agree','Agree'][v-1];
+}
+
+function selectAnswer(group, qid, value) {
+  state.answers[group][qid] = value;
+  // Update visuals
+  const card = document.getElementById('card_'+qid);
+  if (card) {
+    card.querySelectorAll('.q-option').forEach(b => b.classList.remove('selected'));
+    card.querySelector(`[data-q="${qid}"][data-v="${value}"]`).classList.add('selected');
+  }
+}
+
+function validateAndGo(currentStep, nextStep) {
+  const groupMap = { 2:['current',Q_CURRENT], 3:['future',Q_FUTURE], 4:['maturity',Q_MATURITY], 5:['engagement',Q_ENGAGEMENT] };
+  const [group, questions] = groupMap[currentStep];
+  const missing = questions.filter(q => state.answers[group][q.id] === undefined);
+  if (missing.length > 0) {
+    alert(`Please answer all ${questions.length} questions before continuing. ${missing.length} remaining.`);
+    document.getElementById('card_'+missing[0].id).scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  goToStep(nextStep);
+}
+
+/* ============================================================
+   STEP NAVIGATION
+   ============================================================ */
+
+function goToStep(n) {
+  // Save profile when leaving step 1
+  if (state.step === 1) {
+    state.profile = {
+      company: document.getElementById('f_company').value || 'Your Company',
+      industry: document.getElementById('f_industry').value || 'N/A',
+      size: document.getElementById('f_size').value || 'mid',
+      units: document.getElementById('f_units').value,
+      geo: document.getElementById('f_geo').value,
+      sponsor: document.getElementById('f_sponsor').value || '',
+      role: document.getElementById('f_role').value || ''
+    };
+  }
+
+  state.step = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+
+  // Progress indicator
+  document.querySelectorAll('.progress-step').forEach((el,i) => {
+    el.classList.remove('current','done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('current');
+  });
+  document.getElementById('progressText').textContent = `Step ${n+1} of 7`;
+
+  // Render questions on first visit
+  if (n === 2) renderQuestions('qBlock-current', Q_CURRENT, 'current');
+  if (n === 3) renderQuestions('qBlock-future', Q_FUTURE, 'future');
+  if (n === 4) renderQuestions('qBlock-maturity', Q_MATURITY, 'maturity');
+  if (n === 5) renderQuestions('qBlock-engagement', Q_ENGAGEMENT, 'engagement');
+
+  // Generate report
+  if (n === 6) {
+    generateReport();
+  }
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ============================================================
+   SCORING LOGIC
+   ============================================================ */
+
+function scoreCurrentOM() {
+  // Calculate integration and standardisation scores (1-5)
+  const integ = Q_CURRENT.filter(q => q.dim==='integration').map(q => state.answers.current[q.id]);
+  const stand = Q_CURRENT.filter(q => q.dim==='standardisation').map(q => state.answers.current[q.id]);
+  const integScore = integ.reduce((a,b)=>a+b,0)/integ.length;
+  const standScore = stand.reduce((a,b)=>a+b,0)/stand.length;
+  return classifyOM(integScore, standScore);
+}
+
+function scoreFutureOM() {
+  const integ = Q_FUTURE.filter(q => q.dim==='integration').map(q => state.answers.future[q.id]);
+  const stand = Q_FUTURE.filter(q => q.dim==='standardisation').map(q => state.answers.future[q.id]);
+  const integScore = integ.reduce((a,b)=>a+b,0)/integ.length;
+  const standScore = stand.reduce((a,b)=>a+b,0)/stand.length;
+  return classifyOM(integScore, standScore);
+}
+
+function classifyOM(integ, stand) {
+  // Threshold at 3.0 (mid-point)
+  const highInteg = integ >= 3.0;
+  const highStand = stand >= 3.0;
+  let model, key;
+  if (highInteg && highStand) { model='Unification'; key='unification'; }
+  else if (highInteg && !highStand) { model='Coordination'; key='coordination'; }
+  else if (!highInteg && highStand) { model='Replication'; key='replication'; }
+  else { model='Diversification'; key='diversification'; }
+  return { model, key, integ:integ.toFixed(1), stand:stand.toFixed(1), highInteg, highStand };
+}
+
+function scoreMaturity() {
+  // Each question 1-5. Some inverted. Average -> mapped to stage 1-4.
+  let total = 0;
+  Q_MATURITY.forEach(q => {
+    let v = state.answers.maturity[q.id];
+    if (q.invert) v = 6 - v;
+    total += v;
+  });
+  const avg = total / Q_MATURITY.length;
+  let stage, name, key;
+  if (avg < 2.0) { stage=1; name='Business Silos'; key='silos'; }
+  else if (avg < 3.0) { stage=2; name='Standardised Technology'; key='standardised'; }
+  else if (avg < 4.0) { stage=3; name='Optimised Core'; key='optimised'; }
+  else { stage=4; name='Business Modularity'; key='modularity'; }
+  return { stage, name, key, score:avg.toFixed(2), pct:Math.round((avg-1)/4*100) };
+}
+
+function scoreEngagement() {
+  // Find first step that is not 'done' (>= 4)
+  const steps = Q_ENGAGEMENT.map(q => state.answers.engagement[q.id]);
+  let firstActive = 0;
+  for (let i=0; i<steps.length; i++) {
+    if (steps[i] < 4) { firstActive = i; break; }
+    firstActive = i + 1; // all done so far
+  }
+  if (firstActive >= steps.length) firstActive = steps.length - 1; // capped
+  return { steps, firstActive, completed: steps.filter(s => s>=4).length };
+}
+
+/* ============================================================
+   OPERATING MODEL DESCRIPTORS
+   ============================================================ */
+
+const OM_DATA = {
+  diversification: {
+    name:'Diversification',
+    desc:'Autonomous business units. Few shared customers, suppliers or data. Each unit runs its own foundation. Synergies come from brand, capital allocation and cross-unit demand stimulation, rather than process integration.',
+    integ:'Low', stand:'Low'
+  },
+  coordination: {
+    name:'Coordination',
+    desc:'Operationally distinct units bound together by shared customers, suppliers, products or data. Strong centre coordinates without dictating local process. Architecture investment concentrates on shared data and integrating technology.',
+    integ:'High', stand:'Low'
+  },
+  replication: {
+    name:'Replication',
+    desc:'Operationally similar but independent units, each running standardised processes. Best practices replicated globally. Innovation extends from one unit to all. Local execution within global standards.',
+    integ:'Low', stand:'High'
+  },
+  unification: {
+    name:'Unification',
+    desc:'One firm, one set of processes, one data spine. Tightly integrated supply chains. Centralised management with functional and process matrix. Maximises efficiency and presents a single face to customers globally.',
+    integ:'High', stand:'High'
+  }
+};
+
+const STAGE_DATA = {
+  silos: {
+    title:'Stage 01: Business Silos',
+    desc:'IT investment chases local needs. Solutions are 100 percent fits to single-unit problems. Innovation is unconstrained, but capability does not compound at the enterprise.',
+    capability:'Local IT applications',
+    objective:'Return on local initiatives',
+    funding:'Individual applications',
+    risk:'Every new strategic initiative starts from zero. The enterprise has no preexisting low-cost capabilities to bring to bear.'
+  },
+  standardised: {
+    title:'Stage 02: Standardised Technology',
+    desc:'Shared technical platforms reduce complexity. Local managers settle for the 80 percent solution in exchange for shorter implementation times and lower risk.',
+    capability:'Shared technical platforms',
+    objective:'Reduced IT cost and risk',
+    funding:'Shared infrastructure services',
+    risk:'IT efficiency improves, but business processes remain fragmented. The firm is positioned for stage 3 but has not yet captured business value.'
+  },
+  optimised: {
+    title:'Stage 03: Optimised Core',
+    desc:'Companywide data and process standards. The core is digitised, predictable and reusable. Local managers lose discretion over core processes; the firm gains operational efficiency and integration leverage.',
+    capability:'Companywide standardised processes and data',
+    objective:'Cost and quality of business operations',
+    funding:'Enterprise applications',
+    risk:'The hardest stage to traverse. Without strong executive commitment, the firm will retreat to stage 2 under local pressure.'
+  },
+  modularity: {
+    title:'Stage 04: Business Modularity',
+    desc:'Plug-and-play business modules sit on top of the optimised core. Strategic agility through customised or reusable components. The competitive ceiling for the industry resets.',
+    capability:'Plug-and-play business process modules',
+    objective:'Speed to market and strategic agility',
+    funding:'Reusable business process components',
+    risk:'Few firms reach this stage. The challenge is sustaining innovation discipline while preserving the optimised core.'
+  }
+};
+
+/* ============================================================
+   REPORT GENERATION
+   ============================================================ */
+
+function generateReport() {
+  const p = state.profile;
+  const cur = scoreCurrentOM();
+  const fut = scoreFutureOM();
+  const mat = scoreMaturity();
+  const eng = scoreEngagement();
+  const today = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+
+  document.getElementById('rt_company').textContent = p.company;
+
+  const reportHTML = `
+    ${renderPage1(p, cur, fut, mat, today)}
+    ${renderPage2(p, cur, fut, mat, today)}
+    ${renderPage3(p, cur, fut, mat, eng, today)}
+    ${renderPage4(p, cur, fut, mat, eng, today)}
+    ${renderPage5(p, cur, fut, mat, today)}
+  `;
+  document.getElementById('reportBody').innerHTML = reportHTML;
+}
+
+function renderPage1(p, cur, fut, mat, today) {
+  const om = OM_DATA[cur.key];
+  const sameOM = cur.key === fut.key;
+  const stageInfo = STAGE_DATA[mat.key];
+  const uplifts = getBookUplifts(mat.stage);
+
+  return `
+    <div class="page" id="page1">
+      <div class="page-header">
+        <div class="page-brand">FOUNDATION<span class="dot">.</span></div>
+        <div class="page-meta">
+          STRATEGY ARCHITECTURE DIAGNOSTIC<br>
+          ${escapeHTML(p.company)}  /  ${today}
+        </div>
+      </div>
+
+      <div class="r-eyebrow">PAGE 01  /  EXECUTIVE SUMMARY</div>
+      <h1 class="r-title">Where the firm <em>stands</em> today.</h1>
+      <p class="r-subtitle">A factual snapshot of ${escapeHTML(p.company)}'s current operating model, architecture maturity, and the foundation for execution available to support strategic ambition.</p>
+
+      <div class="exec-grid">
+        <div class="exec-cell">
+          <div class="exec-label">Industry</div>
+          <div class="exec-value">${escapeHTML(p.industry)}</div>
+          <div class="exec-meta">${escapeHTML(p.geo)}</div>
+        </div>
+        <div class="exec-cell">
+          <div class="exec-label">Current Operating Model</div>
+          <div class="exec-value">${cur.model}</div>
+          <div class="exec-meta">Integration ${cur.integ}/5  ·  Standardisation ${cur.stand}/5</div>
+        </div>
+        <div class="exec-cell">
+          <div class="exec-label">Architecture Maturity</div>
+          <div class="exec-value">Stage ${mat.stage}: ${mat.name}</div>
+          <div class="exec-meta">Score ${mat.score}/5  ·  ${mat.pct}% maturity index</div>
+        </div>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Current Operating Model: ${cur.model}</div>
+        <p class="r-body">${om.desc}</p>
+
+        ${renderMiniMatrix(cur.key, fut.key)}
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Architecture Maturity Position</div>
+        ${renderMaturityStrip(mat.stage)}
+        <p class="r-body">${stageInfo.desc}</p>
+
+        <div class="r-callout">
+          <div class="r-callout-label">Critical observation</div>
+          <div class="r-callout-text">${stageInfo.risk}</div>
+        </div>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Performance Uplift Potential</div>
+        <p class="r-body">Research across more than 100 firms (Ross, Weill &amp; Robertson, 2006) shows that companies with a mature foundation for execution consistently outperform those without one across five strategic dimensions. The figures below represent the measured performance differential. <strong>${uplifts.remaining}</strong></p>
+        <div class="value-grid" style="margin-top:20px">
+          <div class="value-card">
+            <div class="value-card-label">Operational efficiency</div>
+            <div class="value-card-amt">+31<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.opeff}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Strategic effectiveness</div>
+            <div class="value-card-amt">+17<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.strateff}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Product leadership</div>
+            <div class="value-card-amt">+34<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.prodlead}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Strategic agility</div>
+            <div class="value-card-amt">+29<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.agility}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer-line">Zeinab Daouhany  /  Executive Decision</div>
+      <div class="page-num">01  /  05</div>
+    </div>
+  `;
+}
+
+/* ── PAGE 2: STRATEGIC IMPERATIVE ── */
+function renderPage2(p, cur, fut, mat, today) {
+  const sameOM = cur.key === fut.key;
+  const futOM = OM_DATA[fut.key];
+  const uplifts = getBookUplifts(mat.stage);
+
+  const gapItems = sameOM
+    ? [
+        { dim:'Operating Model', cur:cur.model, tgt:fut.model+' (no change)', desc:'Strategy and current model are aligned. The work is depth, not direction.' },
+        { dim:'Architecture Maturity', cur:'Stage '+mat.stage, tgt:'Stage '+Math.min(mat.stage+1,4), desc:'Advance one stage to capture the value envelope above.' }
+      ]
+    : [
+        { dim:'Operating Model', cur:cur.model, tgt:fut.model, desc:'Strategy demands a different operating posture than the firm runs today.' },
+        { dim:'Architecture Maturity', cur:'Stage '+mat.stage, tgt:'Stage '+Math.min(mat.stage+1,4), desc:'New operating model requires deeper architecture maturity to support it.' },
+        { dim:'Process Integration', cur:cur.integ+'/5', tgt:fut.integ+'/5', desc:fut.integ > cur.integ ? 'Increase cross-unit integration of customers, data and operations.' : 'Maintain current integration level; focus shift elsewhere.' },
+        { dim:'Process Standardisation', cur:cur.stand+'/5', tgt:fut.stand+'/5', desc:fut.stand > cur.stand ? 'Drive process standardisation across units to support the future model.' : 'Maintain current standardisation; preserve local process discretion.' }
+      ];
+
+  const whyChange = sameOM
+    ? `Your current operating model (<strong>${cur.model}</strong>) is the right one for your stated future strategy. The strategic risk is therefore not in choosing the wrong model, but in failing to mature the architecture beneath it. Stage ${mat.stage} of architecture maturity will not support the demands you are placing on the foundation. The roadmap focuses on stage advancement.`
+    : `Your stated three-year strategy implies a <strong>${fut.model}</strong> operating model, but the firm currently runs as <strong>${cur.model}</strong>. This is the strategy execution gap. Without realigning the operating model and the underlying architecture, the strategy will stall at execution because the foundation is not built to support it. Continuing with the current operating model in pursuit of the new strategy will produce escalating cost and falling agility.`;
+
+  const risks = generateRiskList(cur, fut, mat, sameOM);
+
+  return `
+    <div class="page" id="page2">
+      <div class="page-header">
+        <div class="page-brand">FOUNDATION<span class="dot">.</span></div>
+        <div class="page-meta">
+          STRATEGY ARCHITECTURE DIAGNOSTIC<br>
+          ${escapeHTML(p.company)}  /  ${today}
+        </div>
+      </div>
+
+      <div class="r-eyebrow">PAGE 02  /  STRATEGIC IMPERATIVE</div>
+      <h1 class="r-title">Why the firm must <em>change</em>.</h1>
+      <p class="r-subtitle">A factual gap analysis between today's foundation and the foundation required by the stated three-year strategy, with the value at stake and the risk of inaction.</p>
+
+      <div class="r-section">
+        <div class="r-section-head">The Strategy Execution Gap</div>
+        <p class="r-body">${whyChange}</p>
+
+        <table class="gap-table">
+          <thead>
+            <tr><th>Dimension</th><th>Current</th><th>Required</th></tr>
+          </thead>
+          <tbody>
+            ${gapItems.map(g => `
+              <tr>
+                <td>${g.dim}</td>
+                <td class="cur-cell">${g.cur}</td>
+                <td class="tgt-cell">${g.tgt}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        ${!sameOM ? `
+          <div class="r-callout">
+            <div class="r-callout-label">Required operating model rationale</div>
+            <div class="r-callout-text">${futOM.desc}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Value at Stake (Research-Validated Uplifts)</div>
+        <div class="value-grid">
+          <div class="value-card">
+            <div class="value-card-label">Operational efficiency</div>
+            <div class="value-card-amt">+31<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.opeff}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Strategic effectiveness</div>
+            <div class="value-card-amt">+17<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.strateff}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Customer intimacy</div>
+            <div class="value-card-amt">+33<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.custint}</div>
+          </div>
+          <div class="value-card">
+            <div class="value-card-label">Strategic agility</div>
+            <div class="value-card-amt">+29<span class="unit">%</span></div>
+            <div class="value-card-desc">${uplifts.agility}</div>
+          </div>
+        </div>
+        <p class="r-body" style="font-size:12px;color:var(--muted);margin-top:12px;font-style:italic">${uplifts.context}</p>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Risk of Inaction</div>
+        <ul class="risk-list">
+          ${risks.map(r => `<li>${r}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="page-footer-line">Zeinab Daouhany  /  Executive Decision</div>
+      <div class="page-num">02  /  05</div>
+    </div>
+  `;
+}
+
+/* ── PAGE 3: SIX-STEP ROADMAP ── */
+function renderPage3(p, cur, fut, mat, eng, today) {
+  const steps = buildSixStepActions(cur, fut, mat, eng);
+  return `
+    <div class="page" id="page3">
+      <div class="page-header">
+        <div class="page-brand">FOUNDATION<span class="dot">.</span></div>
+        <div class="page-meta">
+          STRATEGY ARCHITECTURE DIAGNOSTIC<br>
+          ${escapeHTML(p.company)}  /  ${today}
+        </div>
+      </div>
+
+      <div class="r-eyebrow">PAGE 03  /  THE ROADMAP</div>
+      <h1 class="r-title">The six-step <em>engagement</em>.</h1>
+      <p class="r-subtitle">A proven sequence to build the foundation, adapted from the leadership agenda in Ross, Weill &amp; Robertson (2006). Status reflects your responses; actions are tailored to your starting position.</p>
+
+      <div class="r-section">
+        ${steps.map((s, i) => `
+          <div class="step-block">
+            <div class="step-block-num">0${i+1}</div>
+            <div class="step-block-content">
+              <span class="step-status ${s.statusClass}">${s.statusLabel}</span>
+              <div class="step-meta">${s.meta}</div>
+              <h4>${s.title}</h4>
+              <p>${s.body}</p>
+              <div class="actions"><strong>For ${escapeHTML(p.company)}:</strong> ${s.action}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="page-footer-line">Zeinab Daouhany  /  Executive Decision</div>
+      <div class="page-num">03  /  05</div>
+    </div>
+  `;
+}
+
+/* ── PAGE 4: 12-MONTH ACTION PLAN ── */
+function renderPage4(p, cur, fut, mat, eng, today) {
+  const plan = build12MonthPlan(cur, fut, mat, eng);
+  const kpis = buildKPIs(mat, p);
+  return `
+    <div class="page" id="page4">
+      <div class="page-header">
+        <div class="page-brand">FOUNDATION<span class="dot">.</span></div>
+        <div class="page-meta">
+          STRATEGY ARCHITECTURE DIAGNOSTIC<br>
+          ${escapeHTML(p.company)}  /  ${today}
+        </div>
+      </div>
+
+      <div class="r-eyebrow">PAGE 04  /  12-MONTH ACTION PLAN</div>
+      <h1 class="r-title">From decision to <em>execution</em>.</h1>
+      <p class="r-subtitle">A quarterly plan to advance the foundation from current state to target. Built around the engagement steps that are not yet complete for your firm.</p>
+
+      <div class="r-section">
+        <div class="r-section-head">Quarterly Milestones</div>
+        <div class="quarter-grid">
+          ${plan.map(q => `
+            <div class="quarter-block">
+              <div class="quarter-label">
+                ${q.quarter}
+                <span class="month-range">${q.months}</span>
+              </div>
+              <div class="quarter-content">
+                <h5>${q.theme}</h5>
+                <ul>
+                  ${q.items.map(i => `<li>${i}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Key Performance Indicators (12-month targets)</div>
+        <div class="kpi-row">
+          ${kpis.map(k => `
+            <div class="kpi-card">
+              <div class="kpi-card-label">${k.label}</div>
+              <div class="kpi-card-target">${k.target}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Governance &amp; Executive Forums</div>
+        <p class="r-body"><strong>Steering committee:</strong> Executive sponsor named above. Quarterly review of progress against this plan, exception management, and reallocation of investment toward shared infrastructure as the architecture matures.</p>
+        <p class="r-body"><strong>Architecture council:</strong> Cross-functional body chaired by the CIO or CTO with representation from each business unit. Meets monthly to review project compliance, approve exceptions and refresh the core diagram.</p>
+        <p class="r-body"><strong>Cadence:</strong> Monthly progress dashboards. Quarterly executive review. Annual operating-model recalibration.</p>
+      </div>
+
+      <div class="signoff">
+        <div class="signoff-block">
+          <div class="signoff-line"></div>
+          <div class="signoff-label">Executive Sponsor  /  Date</div>
+        </div>
+        <div class="signoff-block">
+          <div class="signoff-line"></div>
+          <div class="signoff-label">Architecture Lead  /  Date</div>
+        </div>
+      </div>
+
+      <div class="page-footer-line">Zeinab Daouhany  /  Executive Decision</div>
+      <div class="page-num">04  /  05</div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   HELPERS: VISUALS
+   ============================================================ */
+
+function renderMiniMatrix(curKey, futKey) {
+  const cells = ['coordination','unification','diversification','replication'];
+  const labels = {
+    coordination:    { name:'Coordination',    sub:'High Int / Low Std' },
+    unification:     { name:'Unification',     sub:'High Int / High Std' },
+    diversification: { name:'Diversification', sub:'Low Int / Low Std' },
+    replication:     { name:'Replication',     sub:'Low Int / High Std' }
+  };
+  return `
+    <div class="mini-matrix">
+      <div class="mini-axis-y">Process Integration</div>
+      <div class="mini-matrix-grid">
+        ${cells.map(c => {
+          const isCur = c === curKey;
+          const isTgt = c === futKey;
+          const cls = isCur && isTgt ? 'mq both' : isCur ? 'mq current' : isTgt ? 'mq target' : 'mq';
+          return `
+            <div class="${cls}">
+              <div class="mq-name">${labels[c].name}</div>
+              <div class="mq-traits">${labels[c].sub}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="mini-axis-x">Process Standardisation  →</div>
+      <div class="mini-legend">
+        <div class="mini-legend-item"><div class="mini-legend-swatch cur"></div>Current model</div>
+        <div class="mini-legend-item"><div class="mini-legend-swatch tgt"></div>Target model (future strategy)</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMaturityStrip(currentStage) {
+  const stages = [
+    {n:1, name:'Business Silos'},
+    {n:2, name:'Standardised Tech'},
+    {n:3, name:'Optimised Core'},
+    {n:4, name:'Business Modularity'}
+  ];
+  return `
+    <div class="maturity-strip">
+      ${stages.map(s => `
+        <div class="maturity-cell ${s.n===currentStage ? 'current' : ''}">
+          <div class="maturity-cell-num">STAGE 0${s.n}</div>
+          <div class="maturity-cell-name">${s.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   HELPERS: BOOK UPLIFTS (Ross, Weill & Robertson, 2006)
+   ============================================================ */
+
+function getBookUplifts(currentStage) {
+  // Stage-calibrated context describing how much opportunity remains
+  const contextByStage = {
+    1: 'At Stage 1 (Business Silos), the firm has the full uplift potential ahead. None of the five performance dimensions have been structurally addressed. Every project starts from zero because no shared capabilities exist to compound.',
+    2: 'At Stage 2 (Standardised Technology), IT infrastructure efficiency is being captured. The remaining uplift on operational efficiency, strategic effectiveness, product leadership, and agility lies in stages 3 and 4, which require process and data standardisation beyond the technology layer.',
+    3: 'At Stage 3 (Optimised Core), operational efficiency gains are largely captured. The primary remaining uplift is in strategic agility (+29%) and product leadership (+34%), which are unlocked by the modular plug-and-play capabilities of Stage 4. Executives at Stage 4 firms rate strategic benefits 40% higher than Stage 3 executives.',
+    4: 'At Stage 4 (Business Modularity), the firm is realising the full performance differential. The strategic priority shifts from building the foundation to exploiting it for innovation, adjacent market entry, and compounding competitive advantage.'
+  };
+  const opeffByStage = {
+    1: 'Firms with a mature foundation achieve 31% higher operational efficiency. At Stage 1, this full uplift is available through process standardisation and IT consolidation.',
+    2: 'IT-layer efficiency is being captured. Process-level standardisation (Stage 3) unlocks the remaining operational efficiency uplift.',
+    3: 'Operational efficiency is substantially captured at Stage 3. Continued improvement comes from modular reuse at Stage 4.',
+    4: 'Operational efficiency gains are fully realised. Compounding advantage through module reuse is now the primary lever.'
+  };
+  const strateffByStage = {
+    1: 'Strategic effectiveness is 17% higher in firms with a foundation. At Stage 1, every new initiative requires bespoke capability build, which reduces the speed and fidelity of execution.',
+    2: 'Shared platforms begin to reduce friction. Full strategic effectiveness requires the common data and process spine of Stage 3.',
+    3: 'The optimised core enables consistent execution of strategy. The full 17% uplift is within reach at this stage.',
+    4: 'Strategic initiatives can be executed at platform speed. The 17% differential is exceeded by the compounding effect of modularity.'
+  };
+  const prodleadByStage = {
+    1: 'Product leadership is 34% higher in firms with a mature foundation. At Stage 1, the absence of reusable capabilities means each product launch is a ground-up effort.',
+    2: 'Shared infrastructure reduces the cost and time of product launches. Business-level capability reuse (Stage 3 and 4) is required to reach the full 34% uplift.',
+    3: 'Product teams can leverage the optimised core. Stage 4 modularity amplifies product leadership further through plug-and-play components.',
+    4: 'Modular capabilities enable product leadership at enterprise scale. New products can be assembled from existing components at a fraction of the traditional build cost.'
+  };
+  const agilityByStage = {
+    1: 'Strategic agility is 29% higher in mature-foundation firms. At Stage 1, the firm cannot respond quickly to market shifts because every response requires rebuilding capability from scratch.',
+    2: 'Technical agility improves at Stage 2. Business-level agility requires the process and data standards of Stage 3 and the modular capabilities of Stage 4.',
+    3: 'The core enables consistent strategic pivots. Full agility is unlocked when modular components can be reconfigured at Stage 4.',
+    4: 'Business Modularity delivers the full 29% agility uplift. Strategies can be executed by assembling and configuring existing modules rather than building from zero.'
+  };
+  const custintByStage = {
+    1: 'Customer intimacy is 33% higher in firms with a mature foundation. Fragmented systems at Stage 1 prevent a coherent customer view and consistent service experience.',
+    2: 'Shared technical platforms improve data consistency. A truly integrated customer experience requires the shared data architecture of Stage 3.',
+    3: 'Common data standards enable a single customer view. Stage 4 modules can deliver personalised experiences at enterprise scale.',
+    4: 'Customer intimacy is fully enabled. Modular services can be configured to serve different customer segments without rebuilding the underlying capability.'
+  };
+  return {
+    opeff: opeffByStage[currentStage],
+    strateff: strateffByStage[currentStage],
+    prodlead: prodleadByStage[currentStage],
+    agility: agilityByStage[currentStage],
+    custint: custintByStage[currentStage],
+    remaining: contextByStage[currentStage],
+    context: 'Performance differentials measured by Ross, Weill &amp; Robertson (2006) across a survey of 103 firms. Figures represent the difference between firms with a mature foundation for execution and those without one, across five strategic performance dimensions.'
+  };
+}
+
+/* ── PAGE 5: CONWAY'S LAW AND TEAM ARCHITECTURE ── */
+function renderPage5(p, cur, fut, mat, today) {
+  const conwayByOM = {
+    unification: 'A Unification model requires a single, integrated team structure where communication flows through shared processes and data. Conway\'s Law predicts that fragmented teams will produce a fragmented architecture even when Unification is the stated intent. Integrated engineering teams, a platform-as-a-service layer, and centrally governed standards are the organisational prerequisites.',
+    coordination: 'A Coordination model requires shared data flows across operationally distinct units. Conway\'s Law predicts that if teams are fully siloed with no cross-unit communication mechanisms, the data integration layer will never materialise or will be continuously contested. The architecture demands coordination forums, shared data ownership, and API-governed interfaces between units.',
+    replication: 'A Replication model requires process standardisation across independent units. Conway\'s Law predicts that local autonomy over team structure will produce local variants of the processes, undermining the standardisation goal. The organisation needs a central process owner, a common engineering platform, and team structures that enforce the standard within each unit.',
+    diversification: 'A Diversification model permits autonomous teams and autonomous architectures. Conway\'s Law predicts that diverse teams will produce diverse systems, which is precisely the intent. The risk is selective integration: when the strategy requires cross-unit data sharing or a common customer view, the absence of any integration team will produce the absent integration.'
+  };
+  const conwayByStage = {
+    1: 'At Stage 1 (Business Silos), the team structure mirrors the architecture: fully functional, fully local, and producing systems that serve each unit in isolation. To move to Stage 2, the organisation must create a shared technical platform team with explicit ownership of the shared infrastructure. Without this team, the platform will not exist.',
+    2: 'At Stage 2 (Standardised Technology), a shared platform team exists but business-process teams remain local. The architecture is technically integrated but operationally fragmented. To advance to Stage 3, the organisation needs cross-functional stream-aligned teams with explicit responsibility for shared processes and data, not just shared infrastructure.',
+    3: 'At Stage 3 (Optimised Core), cross-functional teams own core processes and data. The risk at this stage is that local teams exert pressure to re-fragment the core. The organisation must protect the architecture through explicit IT governance, architecture council authority, and stage-gated project funding that enforces compliance.',
+    4: 'At Stage 4 (Business Modularity), the team structure is designed around reusable business modules. Each module team owns a bounded context: well-defined interfaces, independent deployment capability, and full-stack ownership from development through operations. Conway\'s Law at this stage is an asset: the modular team structure naturally produces a modular architecture that supports strategic agility.'
+  };
+
+  return `
+    <div class="page" id="page5">
+      <div class="page-header">
+        <div class="page-brand">FOUNDATION<span class="dot">.</span></div>
+        <div class="page-meta">
+          STRATEGY ARCHITECTURE DIAGNOSTIC<br>
+          ${escapeHTML(p.company)}  /  ${today}
+        </div>
+      </div>
+
+      <div class="r-eyebrow">PAGE 05  /  CONWAY'S LAW INSIGHTS</div>
+      <h1 class="r-title">How your team structure shapes your <em>architecture</em>.</h1>
+      <p class="r-subtitle">Conway's Law states that organisations produce systems that mirror their communication structures. The architecture cannot be fixed without also fixing the team design. This page connects that principle to your specific operating model and maturity stage.</p>
+
+      <div class="r-section">
+        <div class="r-section-head">The Law</div>
+        <div class="r-callout" style="margin-bottom:24px">
+          <div class="r-callout-label">Conway's Law (1968)</div>
+          <div class="r-callout-text">"Organisations which design systems are constrained to produce designs which are copies of the communication structures of these organisations. The larger an organisation is, the less flexibility it has and the more pronounced the phenomenon."</div>
+        </div>
+        <p class="r-body">The implication for strategy architecture is direct. Announcing a new operating model without redesigning the team structure will produce the old architecture under a new name. The team design is not a downstream consequence of the architecture decision; it is a prerequisite.</p>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Conway's Law Applied to Your Operating Model: ${cur.model}</div>
+        <p class="r-body">${conwayByOM[cur.key]}</p>
+        ${cur.key !== fut.key ? `
+        <div class="r-callout" style="margin-top:16px">
+          <div class="r-callout-label">Transition to ${fut.model}</div>
+          <div class="r-callout-text">Moving from ${cur.model} to ${fut.model} requires a deliberate change in communication structures before the architecture can change. The team redesign must precede the platform investment, not follow it.</div>
+        </div>` : ''}
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Conway's Law at Your Maturity Stage: Stage ${mat.stage}</div>
+        <p class="r-body">${conwayByStage[mat.stage]}</p>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-head">Three Organisational Design Principles</div>
+
+        <div class="step-block">
+          <div class="step-block-num" style="font-size:28px">01</div>
+          <div class="step-block-content">
+            <h4>Keep teams small and bounded</h4>
+            <p>Research shows that teams of five to ten people maintain a shared understanding of the system they own. Communication links scale combinatorially with team size: a team of ten has 45 communication paths; a team of twenty has 190. Smaller teams produce more coherent architectures because they can hold the entire system in a shared mental model.</p>
+          </div>
+        </div>
+
+        <div class="step-block">
+          <div class="step-block-num" style="font-size:28px">02</div>
+          <div class="step-block-content">
+            <h4>Design team boundaries around bounded contexts</h4>
+            <p>Each team should own a bounded context: a part of the system where the team controls the internal data structures, the processes, and the interfaces. Other teams interact with that context only through well-defined APIs. This is what makes independent deployment possible and what prevents the tightly coupled architectures that require organisation-wide coordination for every change.</p>
+          </div>
+        </div>
+
+        <div class="step-block">
+          <div class="step-block-num" style="font-size:28px">03</div>
+          <div class="step-block-content">
+            <h4>Fund services and products, not projects</h4>
+            <p>Project funding creates project behaviour: short-term ownership, no accountability for long-term consequences, and teams that are reassigned before they see the results of their decisions. Product funding creates stable teams with ongoing accountability for the outcome their system produces. Conway's Law ensures that stable, outcome-oriented teams produce stable, outcome-oriented architectures.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer-line">Zeinab Daouhany  /  Executive Decision</div>
+      <div class="page-num">05  /  05</div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   HELPERS: NARRATIVE LOGIC
+   ============================================================ */
+
+function generateRiskList(cur, fut, mat, sameOM) {
+  const risks = [];
+
+  if (mat.stage === 1) {
+    risks.push('Continued accumulation of legacy debt: each new initiative will compound the existing patchwork rather than building shared capability.');
+    risks.push('IT cost will continue to rise as a proportion of operating expenditure while delivery velocity declines, because each new initiative duplicates rather than reuses existing capability.');
+  }
+  if (mat.stage === 2) {
+    risks.push('IT cost gains will plateau without progression to stage 3, where business value compounds rather than just technical efficiency.');
+  }
+  if (mat.stage === 3) {
+    risks.push('Pressure from local managers to re-fragment the optimised core. Without active executive sponsorship the firm will retreat to stage 2.');
+  }
+
+  if (!sameOM) {
+    risks.push(`Strategy will stall at execution. The ${cur.model} model cannot deliver on a ${fut.model} agenda without architectural realignment.`);
+  }
+
+  if (fut.integ > cur.integ + 0.5) {
+    risks.push('Cross-unit customer experience will fragment: customers will receive inconsistent service depending on which unit they touch.');
+  }
+  if (fut.stand > cur.stand + 0.5) {
+    risks.push('Process inconsistency will block enterprise scale: each market entry or product launch will require bespoke implementation.');
+  }
+
+  risks.push('Competitive ceiling: peers further along the maturity curve will outpace ' + (cur.model === 'Diversification' ? 'on cross-unit synergies' : 'on cost base and time to market') + '.');
+
+  return risks.slice(0, 5);
+}
+
+function buildSixStepActions(cur, fut, mat, eng) {
+  const sameOM = cur.key === fut.key;
+  const stepDefs = [
+    {
+      title:'Analyse where you are',
+      meta:'WEEKS 1 TO 6  ·  AUDIT &amp; DIAGNOSIS',
+      body:'Audit existing systems, processes, and IT investment patterns. Identify the actual operating model in practice and the maturity stage achieved.',
+      action: eng.steps[0] >= 4
+        ? 'Already complete. Refresh the diagnostic at the next strategic planning cycle to track progress.'
+        : `Conduct full diagnostic across the ${escapeHTML(state.profile.units)} business units. Map current applications, data flows and process patterns. Validate against the findings of this report.`
+    },
+    {
+      title:'Define your operating model',
+      meta:'WEEKS 7 TO 10  ·  EXECUTIVE DECISION',
+      body:'Force the executive decision on integration and standardisation. Make the choice explicit, then commit. The model dictates which strategies you can pursue.',
+      action: sameOM && eng.steps[1] >= 4
+        ? `${cur.model} model already ratified. Reinforce the decision with quarterly executive communication.`
+        : sameOM
+          ? `Formally ratify the ${cur.model} operating model at the executive committee. Communicate to the firm.`
+          : `Convene a two-day executive offsite. Decision required: move from ${cur.model} to ${fut.model}. Without ratification, the rest of the roadmap cannot proceed.`
+    },
+    {
+      title:'Design your enterprise architecture',
+      meta:'WEEKS 11 TO 22  ·  CORE DIAGRAM &amp; BLUEPRINT',
+      body:'Translate the operating model into a one-page core diagram covering core processes, shared data, key technologies, and customer interfaces.',
+      action: eng.steps[2] >= 4
+        ? 'Refresh the core diagram annually to reflect strategic shifts. Validate that all major projects can be located on it.'
+        : `Design the core diagram for the ${fut.model} model. Define which processes, data, and customer interfaces are shared versus local. Ratify with the executive committee.`
+    },
+    {
+      title:'Set priorities and the funding model',
+      meta:'WEEKS 23 TO 28  ·  CAPITAL REALLOCATION',
+      body:'Reallocate IT investment toward shared infrastructure and enterprise applications. Move from local optimisation to enterprise reuse.',
+      action: eng.steps[3] >= 4
+        ? 'Funding model operating. Continue quarterly reviews to ensure the shared services pipeline remains funded.'
+        : `Shift ${mat.stage <= 2 ? '15 to 20' : '25 to 30'} percent of unit-level IT budgets into a shared services pool. Establish a new investment governance body to allocate.`
+    },
+    {
+      title:'Install the engagement model',
+      meta:'WEEKS 29 TO 40  ·  GOVERNANCE BUILD',
+      body:'Stand up IT governance, disciplined project management, and the linking mechanisms that align project decisions with the architecture.',
+      action: eng.steps[4] >= 4
+        ? 'Engagement model running. Refresh the architecture exception process to ensure exceptions remain rare and visible.'
+        : `Establish three forums: (1) Architecture Council with veto over non-compliant projects, (2) standardised stage-gate methodology for all initiatives, (3) monthly linking forum between business and IT.`
+    },
+    {
+      title:'Exploit the foundation for growth',
+      meta:'WEEKS 41 TO 52  ·  GROWTH ACCELERATION',
+      body:'Fund training. Align incentives. Reward outside-in and inside-out creativity that leverages the foundation. Compound the advantage.',
+      action: eng.steps[5] >= 4
+        ? 'Continue quarterly innovation reviews. Track the percentage of new initiatives leveraging shared capabilities.'
+        : `Identify three growth initiatives that can ride the new foundation in year 2. Set executive incentives tied to architecture leverage rather than local ROI.`
+    }
+  ];
+
+  return stepDefs.map((s, i) => {
+    const status = eng.steps[i];
+    let statusClass, statusLabel;
+    if (status >= 4) { statusClass = 'status-done'; statusLabel = 'Complete'; }
+    else if (i === eng.firstActive) { statusClass = 'status-active'; statusLabel = 'Start here'; }
+    else { statusClass = 'status-pending'; statusLabel = 'Pending'; }
+    return { ...s, statusClass, statusLabel };
+  });
+}
+
+function build12MonthPlan(cur, fut, mat, eng) {
+  const sameOM = cur.key === fut.key;
+  const startStep = eng.firstActive; // 0-indexed first incomplete step
+
+  // Each quarter's content adapts to where engagement begins
+  const plans = [];
+
+  // Q1
+  if (startStep === 0) {
+    plans.push({
+      quarter:'Q1', months:'Months 1 to 3',
+      theme:'Diagnose &amp; Decide',
+      items:[
+        'Complete enterprise diagnostic: applications, data, processes, governance',
+        'Draft the operating model recommendation memo for the executive committee',
+        'Two-day executive offsite: ratify operating model decision',
+        sameOM ? `Confirm ${cur.model} as the ratified model` : `Decide: shift from ${cur.model} to ${fut.model}`,
+        'Communicate the decision firmwide through CEO town hall'
+      ]
+    });
+  } else if (startStep === 1) {
+    plans.push({
+      quarter:'Q1', months:'Months 1 to 3',
+      theme:'Ratify &amp; Communicate',
+      items:[
+        'Convene executive offsite for operating model ratification',
+        sameOM ? `Reaffirm ${cur.model} model at exco level` : `Ratify shift from ${cur.model} to ${fut.model}`,
+        'Issue executive memo defining the operating model and its implications',
+        'Establish the architecture council with named members',
+        'Begin draft of the enterprise core diagram'
+      ]
+    });
+  } else {
+    plans.push({
+      quarter:'Q1', months:'Months 1 to 3',
+      theme:'Architect &amp; Align',
+      items:[
+        'Finalise and ratify the one-page enterprise core diagram',
+        'Identify the shared processes, data, and infrastructure layer',
+        'Begin reallocating IT budget toward shared services',
+        'Stand up the architecture council and meeting cadence',
+        'Pilot the architecture exception process on three live projects'
+      ]
+    });
+  }
+
+  // Q2
+  plans.push({
+    quarter:'Q2', months:'Months 4 to 6',
+    theme:'Architecture &amp; Funding',
+    items:[
+      'Publish the one-page core diagram for the future operating model',
+      'Reallocate 15 to 25 percent of unit IT budgets into shared services pool',
+      'Stand up the architecture council with formal decision rights',
+      'Identify top 5 in-flight projects: assess architecture compliance',
+      'Map the application portfolio: identify candidates for retirement, consolidation, retention'
+    ]
+  });
+
+  // Q3
+  plans.push({
+    quarter:'Q3', months:'Months 7 to 9',
+    theme:'Engagement Model Build',
+    items:[
+      'Roll out the standardised stage-gate project methodology',
+      'Launch monthly business-IT linking forum',
+      'Train ' + (state.profile.units || '4 to 10') + ' business unit leaders on the operating model and architecture',
+      'Establish architecture exception process with named approvers',
+      'Migrate first wave of capabilities to shared infrastructure'
+    ]
+  });
+
+  // Q4
+  plans.push({
+    quarter:'Q4', months:'Months 10 to 12',
+    theme:'Exploit the Foundation',
+    items:[
+      'Identify three year-2 growth initiatives that ride the new foundation',
+      'Adjust executive incentives to reward architecture leverage',
+      'Publish the first quarterly architecture maturity dashboard',
+      'Run year-end retrospective with the executive committee',
+      'Re-baseline the diagnostic and update the year-2 plan'
+    ]
+  });
+
+  return plans;
+}
+
+function buildKPIs(mat, p) {
+  const targetStage = Math.min(mat.stage + 1, 4);
+  return [
+    { label:'Maturity stage', target:'Stage '+mat.stage+' → '+targetStage },
+    { label:'Shared services budget %', target:'+15 to +25 pp' },
+    { label:'Architecture compliance', target:'85% of projects' },
+    { label:'Time to market', target:'-25% baseline' }
+  ];
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+function escapeHTML(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+
+</body>
+</html>
